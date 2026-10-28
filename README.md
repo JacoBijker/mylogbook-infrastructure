@@ -90,7 +90,7 @@ Encrypt after editing:
 ./scripts/encrypt-secrets.ps1
 ```
 
-The committed `api.env.enc` files contain strong generated database and token values, but the SMTP and social-login values are placeholders. Replace them before enabling email sign-in or social sign-in.
+The committed `api.env.enc` files contain strong generated database and token values, but the SMTP and social-login values are placeholders. Replace them before enabling email sign-in or social sign-in. The PWA's Google and Apple client IDs are compile-time values in `environment.qa.ts` and `environment.prod.ts` in the app repository, so set them there and rebuild the PWA images.
 
 ## First deployment
 
