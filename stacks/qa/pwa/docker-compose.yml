@@ -1,3 +1,5 @@
+name: mylogbook-qa-pwa
+
 services:
   pwa:
     image: docker.spoyla.com/devops-mylogbook-pwa:${PWA_IMAGE_TAG}

@@ -1,3 +1,5 @@
+name: mylogbook-prod-api
+
 services:
   migrator:
     image: docker.spoyla.com/devops-mylogbook-dbup:${API_IMAGE_TAG}

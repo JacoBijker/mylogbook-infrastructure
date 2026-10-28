@@ -1,3 +1,5 @@
+name: mylogbook-prod-marketing
+
 services:
   marketing:
     image: docker.spoyla.com/devops-mylogbook-marketing:${MARKETING_IMAGE_TAG}
