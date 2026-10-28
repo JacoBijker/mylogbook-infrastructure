@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: release-mylogbook-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB_QA: ${POSTGRES_DB_QA}
+      POSTGRES_DB_PROD: ${POSTGRES_DB_PROD}
+    ports:
+      - "7433:5432"
+    volumes:
+      - mylogbook-postgres-data-release:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      mylogbook_default:
+        aliases:
+          - release-mylogbook-postgres
+
+networks:
+  mylogbook_default:
+    name: mylogbook_default
+
+volumes:
+  mylogbook-postgres-data-release:
+    name: mylogbook-postgres-data-release

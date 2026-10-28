@@ -1,0 +1,20 @@
+services:
+  pwa:
+    image: docker.spoyla.com/devops-mylogbook-pwa:${PWA_IMAGE_TAG}
+    restart: unless-stopped
+    ports:
+      - "8084:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      mylogbook_default:
+        aliases:
+          - qa-mylogbook-pwa
+
+networks:
+  mylogbook_default:
+    external: true

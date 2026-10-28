@@ -1,0 +1,66 @@
+services:
+  migrator:
+    image: docker.spoyla.com/devops-mylogbook-dbup:${API_IMAGE_TAG}
+    restart: "no"
+    environment:
+      - MYLOGBOOK_DB=${ConnectionStrings__MyLogbookDatabase}
+    networks:
+      - mylogbook_default
+
+  api:
+    image: docker.spoyla.com/devops-mylogbook-api:${API_IMAGE_TAG}
+    restart: unless-stopped
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+    ports:
+      - "8085:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__MyLogbookDatabase=${ConnectionStrings__MyLogbookDatabase}
+      - TokenOptions__Issuer=${TokenOptions__Issuer}
+      - TokenOptions__Audience=${TokenOptions__Audience}
+      - TokenOptions__Secret=${TokenOptions__Secret}
+      - TokenOptions__AccessTokenMinutes=${TokenOptions__AccessTokenMinutes}
+      - TokenOptions__RefreshTokenDays=${TokenOptions__RefreshTokenDays}
+      - App__PwaUrl=${App__PwaUrl}
+      - App__MarketingUrl=${App__MarketingUrl}
+      - App__SupportEmail=${App__SupportEmail}
+      - BlobStorageOptions__BlobStoragePath=${BlobStorageOptions__BlobStoragePath}
+      - EmailOptions__Enabled=${EmailOptions__Enabled}
+      - EmailOptions__Host=${EmailOptions__Host}
+      - EmailOptions__Port=${EmailOptions__Port}
+      - EmailOptions__Username=${EmailOptions__Username}
+      - EmailOptions__Password=${EmailOptions__Password}
+      - EmailOptions__FromName=${EmailOptions__FromName}
+      - EmailOptions__FromAddress=${EmailOptions__FromAddress}
+      - EmailOptions__LocalDomain=${EmailOptions__LocalDomain}
+      - EmailOptions__PwaUrl=${EmailOptions__PwaUrl}
+      - EmailOptions__SupportEmail=${EmailOptions__SupportEmail}
+      - EmailOptions__OutboxPath=${EmailOptions__OutboxPath}
+      - EmailOptions__SkipSslCertificateValidation=${EmailOptions__SkipSslCertificateValidation}
+      - Cors__AllowedOrigins__0=${Cors__AllowedOrigins__0}
+      - Cors__AllowedOrigins__1=${Cors__AllowedOrigins__1}
+      - Otp__CodeLength=${Otp__CodeLength}
+      - Otp__ExpiryMinutes=${Otp__ExpiryMinutes}
+      - Otp__MaxAttempts=${Otp__MaxAttempts}
+      - Otp__ResendCooldownSeconds=${Otp__ResendCooldownSeconds}
+      - SocialAuth__GoogleClientId=${SocialAuth__GoogleClientId}
+      - SocialAuth__AppleClientId=${SocialAuth__AppleClientId}
+    volumes:
+      - mylogbook-blobs-qa:/app/storage/blobs
+      - mylogbook-emails-qa:/app/storage/emails
+    networks:
+      mylogbook_default:
+        aliases:
+          - qa-mylogbook-api
+
+networks:
+  mylogbook_default:
+    external: true
+
+volumes:
+  mylogbook-blobs-qa:
+    name: mylogbook-blobs-qa
+  mylogbook-emails-qa:
+    name: mylogbook-emails-qa
