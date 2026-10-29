@@ -36,11 +36,10 @@ Confirm every port is free on the target host before the first deployment. The p
 | Image | Built by |
 |---|---|
 | `docker.spoyla.com/devops-mylogbook-api` | `Api/MyLogbook.Api/azure-pipelines-api.yml` |
-| `docker.spoyla.com/devops-mylogbook-dbup` | `Api/MyLogbook.Api/azure-pipelines-api.yml` |
 | `docker.spoyla.com/devops-mylogbook-pwa` | `UI/Angular/MyLogbook.UI.Angular.Pwa/azure-pipelines-pwa.yml` |
 | `docker.spoyla.com/devops-mylogbook-marketing` | `UI/Angular/MyLogbook.UI.Angular.Marketing.Web/azure-pipelines-marketing.yml` |
 
-The API pipeline builds the API and DbUp images with the same build number. The PWA and marketing pipelines build QA and production variants: QA publishes `latest` and `<build>`, production publishes `latest-prod` and `<build>-prod`.
+The PWA and marketing pipelines build QA and production variants: QA publishes `latest` and `<build>`, production publishes `latest-prod` and `<build>-prod`.
 
 Each stack's `.env` holds only the image tag. Set it to a build number for a reproducible deployment; `latest` and `latest-prod` are useful for the first rollout.
 
@@ -105,7 +104,7 @@ The committed `api.env.enc` files contain strong generated database and token va
 
    Wait for the healthcheck. The init script creates `mylogbook_qa` and `mylogbook_prod` only when the volume is first initialised.
 
-4. Start the QA API stack. The migration container runs to completion before the API starts:
+4. Run the QA database release so DbUp migrates `mylogbook_qa`, then start the QA API stack:
 
    ```bash
    cd stacks/qa/api
@@ -124,17 +123,17 @@ The API `GET /health` returns `200` when the database is reachable. The PWA and 
 
 ## Database migrations
 
-The API stack runs `devops-mylogbook-dbup` as a one-shot `migrator` service before the API. DbUp applies journaled schema scripts once and reapplies idempotent data and function scripts on every rollout.
-
-A failed migration stops the API from starting. Inspect the migrator logs with:
+Migrations are not part of the compose stacks. `DB/azure-pipelines-db.yml` in the app repository runs when `DB/**` changes and publishes the `MyLogbook.DbUp` build artifact. An Azure release pipeline deploys that artifact and runs it against each database:
 
 ```bash
-docker compose logs migrator
+dotnet MyLogbook.DB.DbUp.dll "<connection string>"
 ```
+
+DbUp applies journaled schema scripts once and reapplies idempotent data and function scripts on every run. It exits non-zero on a failed script. Run the database release before deploying an API build that depends on new schema.
 
 ## Rollback
 
-Set the service tag in the stack `.env` back to the previous build number and let Dockhand or Compose redeploy. Do not roll back the database image independently of the API; schema scripts are forward-only.
+Set the service tag in the stack `.env` back to the previous build number and let Dockhand or Compose redeploy. Schema scripts are forward-only; a rolled-back API must still work against the current schema.
 
 ## Backups
 

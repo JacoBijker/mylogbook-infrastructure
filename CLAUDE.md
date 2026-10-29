@@ -31,7 +31,7 @@ Never commit a decrypted `.env`, the key, an SMTP password, a real connection st
 
 Each application stack directory has a `.env` containing only its image tag. Compose files reference variables supplied by the matching `secrets/<env>/api.env` file.
 
-The API stack includes a `migrator` service. It must complete before the API starts.
+Database migrations are not part of the stacks. An Azure release pipeline runs the `MyLogbook.DbUp` build artifact against each database before the API is deployed.
 
 ## Commands
 

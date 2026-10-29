@@ -1,20 +1,9 @@
 name: mylogbook-prod-api
 
 services:
-  migrator:
-    image: docker.spoyla.com/devops-mylogbook-dbup:${API_IMAGE_TAG}
-    restart: "no"
-    environment:
-      - MYLOGBOOK_DB=${ConnectionStrings__MyLogbookDatabase}
-    networks:
-      - mylogbook_default
-
   api:
     image: docker.spoyla.com/devops-mylogbook-api:${API_IMAGE_TAG}
     restart: unless-stopped
-    depends_on:
-      migrator:
-        condition: service_completed_successfully
     ports:
       - "8082:8080"
     environment:
