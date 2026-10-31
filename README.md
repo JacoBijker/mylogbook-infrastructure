@@ -2,13 +2,14 @@
 
 GitOps repository for MyLogbook. It contains the Docker Compose stacks, image tags and encrypted secrets for the QA and production environments.
 
-Application code and Docker images live in the separate `gps_tracker` repository. Images publish to `docker.spoyla.com/devops-mylogbook-*` from the Azure Pipelines in that repository.
+Application code and Docker images live in the sibling `MyLogbook` repository. Images publish to `docker.spoyla.com/devops-mylogbook-*` from the Azure Pipelines in that repository.
 
 ## Environments
 
 | Service | QA | Production |
 |---|---|---|
 | API | `stacks/qa/api` | `stacks/production/api` |
+| Worker Service | `stacks/qa/workerservice` | `stacks/production/workerservice` |
 | PWA | `stacks/qa/pwa` | `stacks/production/pwa` |
 | Marketing website | `stacks/qa/marketing` | `stacks/production/marketing` |
 | PostgreSQL | `stacks/release/db` | `stacks/release/db` |
@@ -36,6 +37,7 @@ Confirm every port is free on the target host before the first deployment. The p
 | Image | Built by |
 |---|---|
 | `docker.spoyla.com/devops-mylogbook-api` | `Api/MyLogbook.Api/azure-pipelines-api.yml` |
+| `docker.spoyla.com/devops-mylogbook-workerservice` | `Service/MyLogbook.Service.SystemEvent.WS/azure-pipelines-workerservice.yml` |
 | `docker.spoyla.com/devops-mylogbook-pwa` | `UI/Angular/MyLogbook.UI.Angular.Pwa/azure-pipelines-pwa.yml` |
 | `docker.spoyla.com/devops-mylogbook-marketing` | `UI/Angular/MyLogbook.UI.Angular.Marketing.Web/azure-pipelines-marketing.yml` |
 
@@ -50,10 +52,12 @@ mylogbook-infrastructure/
 ├── stacks/
 │   ├── qa/
 │   │   ├── api/docker-compose.yml       .env
+│   │   ├── workerservice/docker-compose.yml .env
 │   │   ├── pwa/docker-compose.yml       .env
 │   │   └── marketing/docker-compose.yml .env
 │   ├── production/
 │   │   ├── api/docker-compose.yml       .env
+│   │   ├── workerservice/docker-compose.yml .env
 │   │   ├── pwa/docker-compose.yml       .env
 │   │   └── marketing/docker-compose.yml .env
 │   └── release/
@@ -64,11 +68,16 @@ mylogbook-infrastructure/
 │   ├── mylogbook.key                    (git-ignored)
 │   ├── qa/api.env                       (git-ignored)
 │   ├── qa/api.env.enc
+│   ├── qa/workerservice.env             (git-ignored)
+│   ├── qa/workerservice.env.enc
 │   ├── prod/api.env                     (git-ignored)
 │   ├── prod/api.env.enc
+│   ├── prod/workerservice.env           (git-ignored)
+│   ├── prod/workerservice.env.enc
 │   ├── release/db.env                   (git-ignored)
 │   └── release/db.env.enc
 └── scripts/
+    ├── deploy-workerservice.ps1
     ├── encrypt-secrets.ps1
     └── decrypt-secrets.ps1
 ```
@@ -89,7 +98,7 @@ Encrypt after editing:
 ./scripts/encrypt-secrets.ps1
 ```
 
-The committed `api.env.enc` files contain strong generated database and token values, but the SMTP and social-login values are placeholders. Replace them before enabling email sign-in or social sign-in. The PWA's Google and Apple client IDs are compile-time values in `environment.qa.ts` and `environment.prod.ts` in the app repository, so set them there and rebuild the PWA images.
+Each environment has two secret files. `api.env` holds the API's database connection, token signing secret, CORS, OTP and social-login settings. `workerservice.env` holds the worker's database connection, SMTP connection and credentials, the PWA URL used in account-deletion links, and the OTP expiry and attempt limit. The API never sends email, so SMTP settings live only in `workerservice.env`. The database connection and the OTP settings appear in both files and must match. The PWA's Google and Apple client IDs are compile-time values in `environment.qa.ts` and `environment.prod.ts` in the app repository, so set them there and rebuild the PWA images.
 
 ## First deployment
 
@@ -111,15 +120,26 @@ The committed `api.env.enc` files contain strong generated database and token va
    docker compose --env-file .env --env-file ../../../secrets/qa/api.env up -d
    ```
 
-5. Start the QA PWA and marketing stacks:
+5. Configure SMTP in `secrets/qa/workerservice.env`: set the SMTP host, port, sender and any required credentials. Re-encrypt the updated file. From the repository root, validate and start the QA worker after migration `0022_CreateSystemEvents`:
+
+   ```powershell
+   ./scripts/deploy-workerservice.ps1 -Environment qa -ValidateOnly
+   ./scripts/deploy-workerservice.ps1 -Environment qa
+   ```
+
+   This pulls the selected worker image and starts the worker. It requires the database stack's network and checks the database connection, SMTP configuration and PWA URL without printing credentials. It does not test SMTP connectivity or message delivery.
+
+6. Start the QA PWA and marketing stacks:
 
    ```bash
    docker compose --env-file .env up -d
    ```
 
-6. Repeat for `stacks/production`.
+7. Request an OTP from the QA app and verify it reaches the intended inbox and no `Failed` row appears in `system_events`. Repeat the rollout for `stacks/production`, using `-Environment prod` for the worker.
 
 The API `GET /health` returns `200` when the database is reachable. The PWA and marketing containers expose `GET /health`.
+
+Register `Service/MyLogbook.Service.SystemEvent.WS/azure-pipelines-workerservice.yml` as an Azure DevOps pipeline and run it to publish the worker image. A YAML file in the application repository does not create or enable that pipeline automatically. Register both worker Compose folders in Dockhand or run the deployment helper on the Docker host; having these files in source does not start either worker. This repository contains no automatic deployment pipeline.
 
 ## Database migrations
 
@@ -144,3 +164,34 @@ Back up the `mylogbook-postgres-data-release` volume and take regular `pg_dump` 
 Create DNS records for all hostnames in the table above. Issue certificates for every hostname, including `www.mylogbook.co.za`, because the marketing container must answer HTTPS before it redirects to the apex.
 
 The application expects the PWA and API to share the `mylogbook.co.za` registrable domain. Do not move either to a different domain; refresh-token cookies are same-site.
+
+
+## Worker service and Sentry
+
+Deploy the matching `workerservice` stack alongside each API after migration `0022_CreateSystemEvents`. It has no
+published port and `.env` selects `WORKER_IMAGE_TAG`. Use the same release's API and worker images.
+The QA worker reads `../../../secrets/qa/workerservice.env`; production reads `../../../secrets/prod/workerservice.env`.
+Use `scripts/deploy-workerservice.ps1 -Environment qa` or `-Environment prod` from the repository root.
+The worker needs no token secret.
+
+The worker processes the `system_events` table. The API adds a row for each sign-in code, account deletion request and contact message, and the matching worker sends the email. Email always uses SMTP. Configure a real SMTP host and sender before deploying; the committed example files contain no usable SMTP credentials. There is no email disable setting, file delivery mode or email storage volume. Local development must also use an SMTP server.
+
+Email workers never retry. A send that fails, times out or is interrupted is marked `Failed` and is not sent again, so a user never receives the same email twice. The user requests a new code or link instead.
+
+After rollout, check worker logs with `docker compose --env-file .env --env-file ../../../secrets/qa/workerservice.env logs --tail 100 workerservice` from the QA worker folder, or substitute `prod` for production. A running worker container or healthy API does not prove queue processing or SMTP delivery. Processed events are deleted, so look for events that are stuck or failed:
+
+```sql
+SELECT e.id, n.name, s.name AS status, e.retry_count, e.exception, e.created_at, e.updated_at
+FROM system_events e
+JOIN system_event_names n ON n.id = e.system_event_name_id
+JOIN system_event_statuses s ON s.id = e.system_event_status_id
+ORDER BY e.id DESC
+LIMIT 20;
+```
+
+For the acceptance test, request one fresh OTP, retrieve the code from the inbox and complete login before it expires. The event should be gone from `system_events`. A `Failed` row means the email was not sent, and its `exception` column holds the redacted reason. SMTP acceptance still depends on the mail server's forwarding and spam handling.
+
+Public DSNs are in application source (API project 24, worker project 28). Stacks explicitly set
+`Sentry__Environment=qa` or `production`, even though QA uses the Production runtime. Current
+pipelines need no private Sentry upload token. API `/health` checks database connectivity; a
+delivered email separately verifies worker operation and migrations.

@@ -6,7 +6,7 @@ Guidance for Claude Code in this repository.
 
 GitOps configuration for MyLogbook. It contains Docker Compose stacks, image tags and encrypted secrets for QA and production. It contains no application code and must not contain decrypted secrets.
 
-Application source is in the sibling `gps_tracker` repository. Images are built by the Azure Pipelines in that repository and published to `docker.spoyla.com/devops-mylogbook-*`.
+Application source is in the sibling `MyLogbook` repository. Images are built by the Azure Pipelines in that repository and published to `docker.spoyla.com/devops-mylogbook-*`.
 
 ## Git
 
@@ -25,11 +25,13 @@ Never commit a decrypted `.env`, the key, an SMTP password, a real connection st
 
 ## Stacks
 
-- QA: `stacks/qa/{api,pwa,marketing}`
-- Production: `stacks/production/{api,pwa,marketing}`
+- QA: `stacks/qa/{api,workerservice,pwa,marketing}`
+- Production: `stacks/production/{api,workerservice,pwa,marketing}`
 - Release database: `stacks/release/db`
 
-Each application stack directory has a `.env` containing only its image tag. Compose files reference variables supplied by the matching `secrets/<env>/api.env` file.
+Each application stack directory has a `.env` containing only its image tag. The API stack reads variables from `secrets/<env>/api.env` and the worker stack from `secrets/<env>/workerservice.env`. SMTP settings belong only in `workerservice.env`; the API never sends email.
+
+Deploy the email worker with `./scripts/deploy-workerservice.ps1 -Environment qa` or `-Environment prod` after database migrations. Its preflight requires configured SMTP for every deployment. `-ValidateOnly` checks configuration without deployment. The helper never prints resolved configuration or credentials. The worker reads `secrets/<env>/workerservice.env`, shares the API's database and needs no token secret. Email workers never retry, so a failed send is marked `Failed` in `system_events` and is not repeated. Email always uses SMTP, including local development; there is no disable setting or file delivery mode.
 
 Database migrations are not part of the stacks. An Azure release pipeline runs the `MyLogbook.DbUp` build artifact against each database before the API is deployed.
 

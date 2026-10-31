@@ -1,0 +1,32 @@
+name: mylogbook-qa-workerservice
+
+services:
+  workerservice:
+    image: docker.spoyla.com/devops-mylogbook-workerservice:${WORKER_IMAGE_TAG:?Set WORKER_IMAGE_TAG in the stack .env}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 40s
+    environment:
+      - DOTNET_ENVIRONMENT=Production
+      - Sentry__Environment=qa
+      - ConnectionStrings__MyLogbookDatabase=${ConnectionStrings__MyLogbookDatabase:?Load the matching workerservice environment file}
+      - EmailOptions__Host=${EmailOptions__Host:?Configure the SMTP host}
+      - EmailOptions__Port=${EmailOptions__Port:-587}
+      - EmailOptions__Username=${EmailOptions__Username}
+      - EmailOptions__Password=${EmailOptions__Password}
+      - EmailOptions__FromName=${EmailOptions__FromName:-MyLogbook}
+      - EmailOptions__FromAddress=${EmailOptions__FromAddress:?Configure the SMTP sender}
+      - EmailOptions__LocalDomain=${EmailOptions__LocalDomain:-mylogbook.co.za}
+      - EmailOptions__PwaUrl=${EmailOptions__PwaUrl:?Set the matching PWA URL}
+      - EmailOptions__SupportEmail=${EmailOptions__SupportEmail:-support@mylogbook.co.za}
+      - EmailOptions__SkipSslCertificateValidation=${EmailOptions__SkipSslCertificateValidation:-false}
+      - Otp__ExpiryMinutes=${Otp__ExpiryMinutes:-10}
+      - Otp__MaxAttempts=${Otp__MaxAttempts:-5}
+    networks:
+      mylogbook_default:
+        aliases:
+          - qa-mylogbook-workerservice
+
+networks:
+  mylogbook_default:
+    external: true

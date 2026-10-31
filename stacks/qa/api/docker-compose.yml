@@ -8,6 +8,7 @@ services:
       - "8085:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      - Sentry__Environment=qa
       - ConnectionStrings__MyLogbookDatabase=${ConnectionStrings__MyLogbookDatabase}
       - TokenOptions__Issuer=${TokenOptions__Issuer}
       - TokenOptions__Audience=${TokenOptions__Audience}
@@ -18,18 +19,6 @@ services:
       - App__MarketingUrl=${App__MarketingUrl}
       - App__SupportEmail=${App__SupportEmail}
       - BlobStorageOptions__BlobStoragePath=${BlobStorageOptions__BlobStoragePath}
-      - EmailOptions__Enabled=${EmailOptions__Enabled}
-      - EmailOptions__Host=${EmailOptions__Host}
-      - EmailOptions__Port=${EmailOptions__Port}
-      - EmailOptions__Username=${EmailOptions__Username}
-      - EmailOptions__Password=${EmailOptions__Password}
-      - EmailOptions__FromName=${EmailOptions__FromName}
-      - EmailOptions__FromAddress=${EmailOptions__FromAddress}
-      - EmailOptions__LocalDomain=${EmailOptions__LocalDomain}
-      - EmailOptions__PwaUrl=${EmailOptions__PwaUrl}
-      - EmailOptions__SupportEmail=${EmailOptions__SupportEmail}
-      - EmailOptions__OutboxPath=${EmailOptions__OutboxPath}
-      - EmailOptions__SkipSslCertificateValidation=${EmailOptions__SkipSslCertificateValidation}
       - Cors__AllowedOrigins__0=${Cors__AllowedOrigins__0}
       - Cors__AllowedOrigins__1=${Cors__AllowedOrigins__1}
       - Otp__CodeLength=${Otp__CodeLength}
@@ -40,7 +29,6 @@ services:
       - SocialAuth__AppleClientId=${SocialAuth__AppleClientId}
     volumes:
       - mylogbook-blobs-qa:/app/storage/blobs
-      - mylogbook-emails-qa:/app/storage/emails
     networks:
       mylogbook_default:
         aliases:
@@ -53,5 +41,3 @@ networks:
 volumes:
   mylogbook-blobs-qa:
     name: mylogbook-blobs-qa
-  mylogbook-emails-qa:
-    name: mylogbook-emails-qa
