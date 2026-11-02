@@ -25,8 +25,8 @@ Never commit a decrypted `.env`, the key, an SMTP password, a real connection st
 
 ## Stacks
 
-- QA: `stacks/qa/{api,workerservice,pwa,marketing}`
-- Production: `stacks/production/{api,workerservice,pwa,marketing}`
+- QA: `stacks/qa/{api,workerservice,pwa,marketing,admin}`
+- Production: `stacks/production/{api,workerservice,pwa,marketing,admin}`
 - Release database: `stacks/release/db`
 
 Each application stack directory has a `.env` containing only its image tag. The API stack reads variables from `secrets/<env>/api.env` and the worker stack from `secrets/<env>/workerservice.env`. SMTP settings belong only in `workerservice.env`; the API never sends email.

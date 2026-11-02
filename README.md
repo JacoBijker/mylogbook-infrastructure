@@ -12,6 +12,7 @@ Application code and Docker images live in the sibling `MyLogbook` repository. I
 | Worker Service | `stacks/qa/workerservice` | `stacks/production/workerservice` |
 | PWA | `stacks/qa/pwa` | `stacks/production/pwa` |
 | Marketing website | `stacks/qa/marketing` | `stacks/production/marketing` |
+| Admin website | `stacks/qa/admin` | `stacks/production/admin` |
 | PostgreSQL | `stacks/release/db` | `stacks/release/db` |
 
 The release database stack creates one PostgreSQL 16 container with separate `mylogbook_qa` and `mylogbook_prod` databases. It is self-contained and uses the `mylogbook_default` Docker network.
@@ -26,11 +27,13 @@ The release database stack creates one PostgreSQL 16 container with separate `my
 | `mylogbook.co.za`, `www.mylogbook.co.za` | Production marketing | 8080 |
 | `pwa.mylogbook.co.za` | Production PWA | 8081 |
 | `api.mylogbook.co.za` | Production API | 8082 |
+| `admin.mylogbook.co.za` | Production Admin | 8086 |
+| `qaadmin.mylogbook.co.za` | QA Admin | 8087 |
 | PostgreSQL | Release database | 7433 |
 
 The host reverse proxy terminates TLS and forwards each hostname to the matching published port. The compose stacks do not contain proxy labels. The marketing container redirects `www.mylogbook.co.za` to `mylogbook.co.za` and returns `X-Robots-Tag: noindex` on the QA host.
 
-Confirm every port is free on the target host before the first deployment. The production trio is 8080-8082; QA uses 8083-8085. The neighbouring Spoyla, SpinFlow and SprintClock stacks use 6060-6150, 7060-7090 and 7160-7195.
+Confirm every port is free on the target host before the first deployment. The production trio is 8080-8082; QA uses 8083-8085. The Admin sites use 8086 (production) and 8087 (QA). The neighbouring Spoyla, SpinFlow and SprintClock stacks use 6060-6150, 7060-7090 and 7160-7195.
 
 ## Images
 
@@ -40,8 +43,9 @@ Confirm every port is free on the target host before the first deployment. The p
 | `docker.spoyla.com/devops-mylogbook-workerservice` | `Service/MyLogbook.Service.SystemEvent.WS/azure-pipelines-workerservice.yml` |
 | `docker.spoyla.com/devops-mylogbook-pwa` | `UI/Angular/MyLogbook.UI.Angular.Pwa/azure-pipelines-pwa.yml` |
 | `docker.spoyla.com/devops-mylogbook-marketing` | `UI/Angular/MyLogbook.UI.Angular.Marketing.Web/azure-pipelines-marketing.yml` |
+| `docker.spoyla.com/devops-mylogbook-admin` | `UI/Angular/MyLogbook.UI.Angular.Admin/azure-pipelines-admin.yml` |
 
-The PWA and marketing pipelines build QA and production variants: QA publishes `latest` and `<build>`, production publishes `latest-prod` and `<build>-prod`.
+The PWA, marketing and Admin pipelines build QA and production variants: QA publishes `latest` and `<build>`, production publishes `latest-prod` and `<build>-prod`.
 
 Each stack's `.env` holds only the image tag. Set it to a build number for a reproducible deployment; `latest` and `latest-prod` are useful for the first rollout.
 
@@ -54,12 +58,14 @@ mylogbook-infrastructure/
 │   │   ├── api/docker-compose.yml       .env
 │   │   ├── workerservice/docker-compose.yml .env
 │   │   ├── pwa/docker-compose.yml       .env
-│   │   └── marketing/docker-compose.yml .env
+│   │   ├── marketing/docker-compose.yml .env
+│   │   └── admin/docker-compose.yml     .env
 │   ├── production/
 │   │   ├── api/docker-compose.yml       .env
 │   │   ├── workerservice/docker-compose.yml .env
 │   │   ├── pwa/docker-compose.yml       .env
-│   │   └── marketing/docker-compose.yml .env
+│   │   ├── marketing/docker-compose.yml .env
+│   │   └── admin/docker-compose.yml     .env
 │   └── release/
 │       └── db/
 │           ├── docker-compose.yml
