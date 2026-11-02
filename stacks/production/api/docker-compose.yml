@@ -28,6 +28,7 @@ services:
       - Cors__AllowedOrigins__0=${Cors__AllowedOrigins__0}
       - Cors__AllowedOrigins__1=${Cors__AllowedOrigins__1}
       - Cors__AllowedOrigins__2=${Cors__AllowedOrigins__2}
+      - Cors__AllowedOrigins__3=${Cors__AllowedOrigins__3}
       - Otp__CodeLength=${Otp__CodeLength}
       - Otp__ExpiryMinutes=${Otp__ExpiryMinutes}
       - Otp__MaxAttempts=${Otp__MaxAttempts}
