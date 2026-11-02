@@ -6,6 +6,12 @@ services:
     restart: unless-stopped
     init: true
     stop_grace_period: 40s
+    healthcheck:
+      test: ["CMD-SHELL", "test -n \"$$(find /tmp/heartbeat -mmin -2 2>/dev/null)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     environment:
       - DOTNET_ENVIRONMENT=Production
       - Sentry__Environment=production
@@ -22,6 +28,9 @@ services:
       - EmailOptions__SkipSslCertificateValidation=${EmailOptions__SkipSslCertificateValidation:-false}
       - Otp__ExpiryMinutes=${Otp__ExpiryMinutes:-10}
       - Otp__MaxAttempts=${Otp__MaxAttempts:-5}
+      - BlobStorageOptions__BlobStoragePath=/app/storage/blobs
+    volumes:
+      - mylogbook-blobs-prod:/app/storage/blobs
     networks:
       mylogbook_default:
         aliases:
@@ -29,4 +38,8 @@ services:
 
 networks:
   mylogbook_default:
+    external: true
+
+volumes:
+  mylogbook-blobs-prod:
     external: true

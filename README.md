@@ -182,6 +182,8 @@ The worker needs no token secret.
 
 The worker processes the `system_events` table. The API adds a row for each sign-in code, account deletion request and contact message, and the matching worker sends the email. Email always uses SMTP. Configure a real SMTP host and sender before deploying; the committed example files contain no usable SMTP credentials. There is no email disable setting, file delivery mode or email storage volume. Local development must also use an SMTP server.
 
+The worker also processes uploaded trip files and moves older trip points into files, so it mounts the API's blob volume (`mylogbook-blobs-prod` or `mylogbook-blobs-qa`) at `/app/storage/blobs`. The volume is created by the API stack, so deploy the API before the worker. Without the shared volume, the worker writes trip files inside its own container, where the API cannot read them and a redeploy deletes them.
+
 Email workers never retry. A send that fails, times out or is interrupted is marked `Failed` and is not sent again, so a user never receives the same email twice. The user requests a new code or link instead.
 
 After rollout, check worker logs with `docker compose --env-file .env --env-file ../../../secrets/qa/workerservice.env logs --tail 100 workerservice` from the QA worker folder, or substitute `prod` for production. A running worker container or healthy API does not prove queue processing or SMTP delivery. Processed events are deleted, so look for events that are stuck or failed:
