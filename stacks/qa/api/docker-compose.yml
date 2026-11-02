@@ -28,13 +28,14 @@ services:
       - Cors__AllowedOrigins__0=${Cors__AllowedOrigins__0}
       - Cors__AllowedOrigins__1=${Cors__AllowedOrigins__1}
       - Cors__AllowedOrigins__2=${Cors__AllowedOrigins__2}
+      - Cors__AllowedOrigins__3=https://localhost
+      - Cors__AllowedOrigins__4=capacitor://localhost
       - Otp__CodeLength=${Otp__CodeLength}
       - Otp__ExpiryMinutes=${Otp__ExpiryMinutes}
       - Otp__MaxAttempts=${Otp__MaxAttempts}
       - Otp__ResendCooldownSeconds=${Otp__ResendCooldownSeconds}
       - SocialAuth__GoogleClientId=${SocialAuth__GoogleClientId}
       - SocialAuth__AppleClientId=${SocialAuth__AppleClientId}
-      - Subscription__OverrideAll=true
     volumes:
       - mylogbook-blobs-qa:/app/storage/blobs
     networks:
