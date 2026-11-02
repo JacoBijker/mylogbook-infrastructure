@@ -27,6 +27,7 @@ services:
       - Otp__ResendCooldownSeconds=${Otp__ResendCooldownSeconds}
       - SocialAuth__GoogleClientId=${SocialAuth__GoogleClientId}
       - SocialAuth__AppleClientId=${SocialAuth__AppleClientId}
+      - Subscription__OverrideAll=true
     volumes:
       - mylogbook-blobs-qa:/app/storage/blobs
     networks:
