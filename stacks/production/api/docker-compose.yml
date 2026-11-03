@@ -37,6 +37,11 @@ services:
       - Otp__ResendCooldownSeconds=${Otp__ResendCooldownSeconds}
       - SocialAuth__GoogleClientId=${SocialAuth__GoogleClientId}
       - SocialAuth__AppleClientId=${SocialAuth__AppleClientId}
+      - GooglePlayOptions__Enabled=${GooglePlayOptions__Enabled:-false}
+      - GooglePlayOptions__ServiceAccountJson=${GooglePlayOptions__ServiceAccountJson:-}
+      - GooglePlayOptions__PubSubAudience=${GooglePlayOptions__PubSubAudience:-}
+      - GooglePlayOptions__PubSubServiceAccountEmail=${GooglePlayOptions__PubSubServiceAccountEmail:-}
+      - PlayBilling__AccountIdSalt=${PlayBilling__AccountIdSalt:-}
     volumes:
       - mylogbook-blobs-prod:/app/storage/blobs
     networks:

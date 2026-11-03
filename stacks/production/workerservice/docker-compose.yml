@@ -29,6 +29,11 @@ services:
       - Otp__ExpiryMinutes=${Otp__ExpiryMinutes:-10}
       - Otp__MaxAttempts=${Otp__MaxAttempts:-5}
       - BlobStorageOptions__BlobStoragePath=/app/storage/blobs
+      - GooglePlayOptions__Enabled=${GooglePlayOptions__Enabled:-false}
+      - GooglePlayOptions__ServiceAccountJson=${GooglePlayOptions__ServiceAccountJson:-}
+      - GooglePlayOptions__PubSubAudience=${GooglePlayOptions__PubSubAudience:-}
+      - GooglePlayOptions__PubSubServiceAccountEmail=${GooglePlayOptions__PubSubServiceAccountEmail:-}
+      - PlayBilling__AccountIdSalt=${PlayBilling__AccountIdSalt:-}
     volumes:
       - mylogbook-blobs-prod:/app/storage/blobs
     networks:
